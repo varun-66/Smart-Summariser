@@ -2,9 +2,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>eSummariser</title>
-    <link rel="icon" type="image/png" href="icon.png"/>
+  <title>Text Summariser</title>
+    <link rel="icon" type="png" href="icon.png">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<!-- jsPDF library -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.2/jspdf.min.js"></script>
+
+
 <style>
 body {font-family: Arial, Helvetica, sans-serif;}
 * {box-sizing: border-box;}
@@ -30,7 +37,7 @@ textarea{
     resize: vertical;
     
 }
-input[type=submit] {
+input[type=submit], button {
   background-color: #4CAF50;
   color: white;
   padding: 12px 20px;
@@ -48,22 +55,170 @@ input[type=submit]:hover {
   background-color: #f2f2f2;
   padding: 20px;
 }
+
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 140px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 150%;
+  left: 50%;
+  margin-left: -75px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+.result{
+	
+}
+
+a{
+	text-decoration: none;
+}
+
 </style>
 </head>
+
+<script>
+	function COPY() {
+	  var copyText = $("#subject1");
+	  copyText.select();
+	  //copyText.setSelectionRange(0, 99999); /* For mobile devices */
+	  document.execCommand("copy");
+	}
+	
+	function exportToPDF() {
+			
+			var doc = new jsPDF();
+			var splitTitle = doc.splitTextToSize($('#subject1').val(), 270);
+			var pageHeight = doc.internal.pageSize.height;
+			doc.setFontType("normal");
+			doc.setFontSize("11");
+			var y = 7;
+			for (var i = 0; i < splitTitle.length; i++) {                
+				if (y > 280) {
+					y = 10;
+					doc.addPage();
+				}
+				doc.text(15, y, splitTitle[i]);
+				y = y + 7;
+			}
+			doc.save('summary.pdf');
+			
+		
+	}
+	function exportToDoc() {
+			
+			
+			var preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title></head><body>";
+			var postHtml = "</body></html>";
+			var html = preHtml+document.getElementById("subject1").innerHTML+postHtml;
+			var filename='summary';
+			
+			var blob = new Blob(['\ufeff', html], {
+				type: 'application/msword'
+			});
+			
+			// Specify link url
+			var url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+			
+			// Specify file name
+			filename = filename?filename+'.doc':'document.doc';
+			
+			// Create download link element
+			var downloadLink = document.createElement("a");
+
+			document.body.appendChild(downloadLink);
+			
+			if(navigator.msSaveOrOpenBlob ){
+				navigator.msSaveOrOpenBlob(blob, filename);
+			}else{
+				// Create a link to the file
+				downloadLink.href = url;
+				
+				// Setting the file name
+				downloadLink.download = filename;
+				
+				//triggering the function
+				downloadLink.click();
+			}
+			
+			document.body.removeChild(downloadLink);
+	}
+	
+	function importText(){
+	
+	  const fileSelector = document.getElementById('givenFile');
+	  fileSelector.addEventListener('change', (event) => {
+		const fileList = event.target.files;
+		console.log(fileList);
+		alert(fileList);
+	  });
+	  
+	
+	  
+	}
+	
+			
+</script>
 <body>
 
-<center><h3>eSummariser</h3><center/>
+<center><h2>Text Summariser</h2><center/>
 
 <div class="container">
   <form method="POST">
         {% csrf_token %}
-    <label for="subject">Enter wikipedia link or your long text</label>
-    <textarea id="subject" name="search" placeholder="Write something.." style="height:200px"></textarea>
-
+    <label for="subject">Enter blog URL or text</label>
+    <textarea id="subject" name="search" placeholder="Write something.." style="height:100px"></textarea>
+	
     <input type="submit" value="Submit" align="center">
   </form>
-  <textarea id="subject" name="subject"  style="height:200px">{{questions}}</textarea>
+  
+  <textarea id="subject1" name="subject"  style="height:200px">{{questions}}</textarea>
 </div>
-  <p>Made by <strong>Varun Sharma</strong>  </p>
+<div class="result">
+	
+	<button onclick="COPY()">Copy text</button>
+	<span>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp </span>
+	
+	<button id="convertToPdf" onclick="exportToPDF()">PDF 
+	<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+</svg></button>
+	<button onclick="exportToDoc()">DOCX <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+  <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+  <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+</svg></button>
+	
+</div>
+  <br><p align="bottom">Made by <strong><a href="https://github.com/varun-66/Smart-Summariser">Varun Sharma</a></strong></p>
 </body>
 </html>
